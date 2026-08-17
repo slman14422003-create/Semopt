@@ -1,0 +1,249 @@
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition
+
+RootManager:
+    id: sm
+    HomeScreen:
+        name: "home"
+    CaseDetailScreen:
+        name: "detail"
+    AddEditCaseScreen:
+        name: "add_edit"
+    MyCasesScreen:
+        name: "my_cases"
+    EncyclopediaScreen:
+        name: "encyclopedia"
+    SettingsScreen:
+        name: "settings"
+
+
+<HomeScreen>:
+    md_bg_color: 0.06, 0.07, 0.09, 1
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDTopAppBar:
+            title: "AST-2012A Clinical Master"
+            right_action_items: [["dots-vertical", lambda x: root.go("settings")]]
+            elevation: 4
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: 64
+            padding: 12, 8
+            spacing: 8
+            MDTextField:
+                id: search_field
+                hint_text: "ابحث عن حالة، عرض، أو مشكلة..."
+                mode: "rectangle"
+                on_text: root.do_search(self.text)
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: 48
+            padding: 12, 0
+            spacing: 8
+            MDFlatButton:
+                text: "🗂️ حالاتي"
+                on_release: root.go("my_cases")
+            MDFlatButton:
+                text: "📖 موسوعة الأنماط"
+                on_release: root.go("encyclopedia")
+
+        ScrollView:
+            MDBoxLayout:
+                id: results_box
+                orientation: "vertical"
+                spacing: 10
+                padding: 12
+                size_hint_y: None
+                height: self.minimum_height
+
+    MDFloatingActionButton:
+        icon: "plus"
+        md_bg_color: 0.05, 0.7, 0.75, 1
+        pos_hint: {"right": 0.95, "y": 0.04}
+        on_release: root.go_add_case()
+
+
+<CaseDetailScreen>:
+    md_bg_color: 0.06, 0.07, 0.09, 1
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "تفاصيل الحالة"
+            left_action_items: [["arrow-right", lambda x: root.go_back()]]
+            elevation: 4
+        ScrollView:
+            MDBoxLayout:
+                id: detail_box
+                orientation: "vertical"
+                spacing: 6
+                padding: 16
+                size_hint_y: None
+                height: self.minimum_height
+
+
+<AddEditCaseScreen>:
+    md_bg_color: 0.06, 0.07, 0.09, 1
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            id: top_bar
+            title: ""
+            left_action_items: [["close", lambda x: root.cancel()]]
+            elevation: 4
+        MDLabel:
+            id: screen_title
+            text: "➕ إضافة حالة جديدة"
+            halign: "center"
+            font_style: "H6"
+            size_hint_y: None
+            height: 44
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                spacing: 10
+                padding: 16
+                size_hint_y: None
+                height: self.minimum_height
+
+                MDTextField:
+                    id: f_keywords
+                    hint_text: "الكلمات المفتاحية (مفصولة بفواصل) *"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_title
+                    hint_text: "عنوان الحالة *"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_mode
+                    hint_text: "النمط (مثال: TENS / EMS) *"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_freq
+                    hint_text: "التردد"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_channel
+                    hint_text: "القناة"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_duration
+                    hint_text: "المدة"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_pole_pos
+                    hint_text: "القطب الموجب (+)"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_pole_neg
+                    hint_text: "القطب السالب (-)"
+                    mode: "rectangle"
+                MDTextField:
+                    id: f_explanation
+                    hint_text: "الشرح الإكلينيكي *"
+                    mode: "rectangle"
+                    multiline: True
+                MDTextField:
+                    id: f_symptoms
+                    hint_text: "الأعراض (اختياري)"
+                    mode: "rectangle"
+                    multiline: True
+                MDTextField:
+                    id: f_sessions_plan
+                    hint_text: "خطة الجلسات (اختياري)"
+                    mode: "rectangle"
+                    multiline: True
+                MDTextField:
+                    id: f_tip
+                    hint_text: "نصيحة (اختياري)"
+                    mode: "rectangle"
+                    multiline: True
+
+                MDRaisedButton:
+                    id: submit_btn
+                    text: "💾 حفظ الحالة"
+                    size_hint_x: 1
+                    on_release: root.submit()
+                MDFlatButton:
+                    text: "إلغاء"
+                    size_hint_x: 1
+                    on_release: root.cancel()
+
+
+<MyCasesScreen>:
+    md_bg_color: 0.06, 0.07, 0.09, 1
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "حالاتي المخصصة"
+            left_action_items: [["arrow-right", lambda x: root.go_back()]]
+            elevation: 4
+        ScrollView:
+            MDBoxLayout:
+                id: cases_box
+                orientation: "vertical"
+                spacing: 4
+                padding: 8
+                size_hint_y: None
+                height: self.minimum_height
+
+
+<EncyclopediaScreen>:
+    md_bg_color: 0.06, 0.07, 0.09, 1
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "موسوعة الأنماط"
+            left_action_items: [["arrow-right", lambda x: root.go_back()]]
+            elevation: 4
+        ScrollView:
+            MDBoxLayout:
+                id: modes_box
+                orientation: "vertical"
+                spacing: 10
+                padding: 12
+                size_hint_y: None
+                height: self.minimum_height
+
+
+<SettingsScreen>:
+    md_bg_color: 0.06, 0.07, 0.09, 1
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "المزيد والإعدادات"
+            left_action_items: [["arrow-right", lambda x: root.go_back()]]
+            elevation: 4
+        MDBoxLayout:
+            orientation: "vertical"
+            spacing: 14
+            padding: 16
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDRaisedButton:
+                id: notif_status
+                text: "🔕 الإشعارات غير مفعّلة - اضغط للتفعيل"
+                size_hint_x: 1
+                on_release: root.toggle_notifications()
+
+            MDFlatButton:
+                text: "⬇️ تصدير نسخة احتياطية من حالاتي"
+                size_hint_x: 1
+                on_release: root.export_backup()
+
+            MDFlatButton:
+                text: "🗑️ مسح كل الحالات المخصصة"
+                theme_text_color: "Custom"
+                text_color: 0.9, 0.4, 0.4, 1
+                size_hint_x: 1
+                on_release: root.clear_all()
+
+            MDLabel:
+                text: "AST-2012A Clinical Master\nتطبيق أندرويد أصلي (Python/Kivy) - بدون WebView أو متصفح.\nكل البيانات محفوظة محليًا على جهازك فقط."
+                halign: "center"
+                theme_text_color: "Custom"
+                text_color: 0.55, 0.6, 0.68, 1
+                size_hint_y: None
+                height: 90
