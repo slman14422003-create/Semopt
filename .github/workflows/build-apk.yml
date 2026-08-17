@@ -1,0 +1,96 @@
+name: Build & Release Android APK (Python/Kivy)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: تجهيز بيئة بايثون
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: تجهيز جافا (مطلوبة لأدوات أندرويد SDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ---------------------------------------------------------------
+      # ملاحظة: كنا نستخدم Docker Action خارجي (ArtemSBulgakov/buildozer-
+      # action) لكنه بيعتمد على صورة Ubuntu/Debian قديمة اتشالت من
+      # سيرفرات apt الرسمية، فبيفشل "apt update" بخطأ exit code 100.
+      # الحل: نبني مباشرة على نفس الـ runner بدل الاعتماد على صورة
+      # Docker خارجية غير مُحدَّثة.
+      # ---------------------------------------------------------------
+      - name: تثبيت اعتماديات النظام المطلوبة لـ Buildozer
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            git zip unzip openjdk-17-jdk python3-pip autoconf libtool \
+            pkg-config zlib1g-dev libncurses-dev libncursesw5-dev cmake \
+            libffi-dev libssl-dev build-essential ccache libltdl-dev
+
+      - name: تثبيت Buildozer وCython
+        run: |
+          pip install --upgrade pip
+          pip install buildozer==1.5.0 cython==0.29.36 virtualenv
+
+      - name: تخزين مؤقت لمجلدات Buildozer/Android SDK (يسرّع البناءات القادمة)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            buildozer-${{ runner.os }}-
+
+      - name: بناء APK (قد يأخذ وقتًا طويلًا في أول مرة لتحميل Android SDK/NDK)
+        run: |
+          yes | buildozer -v android debug
+
+      - name: تجهيز ملف الإصدار النهائي
+        run: |
+          mkdir -p dist
+          APK_FILE=$(find bin -name "*.apk" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "::error::لم يتم العثور على ملف APK الناتج."
+            find bin -maxdepth 2 || true
+            exit 1
+          fi
+          cp "$APK_FILE" "dist/AST-2012A-ClinicalMaster-v1.0.${{ github.run_number }}.apk"
+          ls -la dist
+
+      - name: رفع سجل البناء كاملًا كـ artifact (مفيد لو حصل خطأ لاحقًا)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-log
+          path: .buildozer/android/platform/build-*/build.log
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: إنشاء إصدار (Release) تلقائي على GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: AST-2012A Clinical Master v1.0.${{ github.run_number }}
+          body: |
+            تطبيق أندرويد أصلي (Python/Kivy/KivyMD) - بدون WebView أو TWA أو أي اعتماد على متصفح.
+            نزّل ملف الـ APK تحت وثبّته على جهاز أندرويد (فعّل "السماح بمصادر غير معروفة" عند التثبيت أول مرة).
+
+            ⚠️ ملاحظة: هذا الإصدار موقّع بمفتاح تصحيح (debug key) وليس مفتاح إصدار (release key)،
+            وهو كافٍ للتجربة والتثبيت المباشر. لنشر التطبيق على متجر Google Play لاحقًا
+            ستحتاج لتوقيعه بمفتاح إصدار ثابت - راجع README.md لمزيد من التفاصيل.
+          files: dist/*.apk
+          make_latest: true
